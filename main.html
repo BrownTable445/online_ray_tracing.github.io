@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ray Tracer</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #222;
+    }
+    canvas {
+      border: 1px solid #333;
+    }
+  </style>
+  <script type="module" src="vec3.js"></script>
+  <script type="module" src="ray.js"></script>
+</head>
+<body>
+  <canvas id="raytracer"></canvas>
+  
+  <script type = "module">
+    import * as vec3 from './vec3.js'
+    import * as hittable from './hittable.js'
+    import * as sphere from './sphere.js'
+    import * as camera from './camera.js'
+    import * as material from './material.js'
+    import * as rtweekend from './rtweekend.js'
+
+    let world = new hittable.hittable_list()
+
+    const material_ground = new material.lambertian(new vec3.vec3(0.8, 0.8, 0.0))
+    world.add(new sphere.sphere(new vec3.vec3(0, -1000, 0), 1000, material_ground))
+
+    for (let a = -11; a < 11; a++) {
+      for (let b = -11; b < 11; b++) {
+        const choose_mat = rtweekend.random_double()
+        const center = new vec3.vec3(a + 0.9 * rtweekend.random_double(), 0.2, b + 0.9 * rtweekend.random_double())
+
+        if (vec3.subtract(center, new vec3.vec3(4, 0.2, 0)).length() > 0.9) {
+          let sphere_material = new material.material()
+
+          if (choose_mat < 0.8) {
+            const albedo = vec3.multiply(vec3.vec3.random(), vec3.vec3.random())
+            sphere_material = new material.lambertian(albedo)
+            world.add(new sphere.sphere(center, 0.2, sphere_material))
+          } else if (choose_mat < 0.95) {
+            const albedo = vec3.vec3.random(0.5, 1)
+            const fuzz = rtweekend.random_double(0, 0.5)
+            sphere_material = new material.metal(albedo, fuzz)
+            world.add(new sphere.sphere(center, 0.2, sphere_material))
+          } else {
+            sphere_material = new material.diaelectric(1.5)
+            world.add(new sphere.sphere(center, 0.2, sphere_material))
+          }
+        }
+      }
+    }
+
+    const material1 = new material.diaelectric(1.5)
+    world.add(new sphere.sphere(new vec3.vec3(0, 1, 0), 1, material1))
+
+    const material2 = new material.lambertian(new vec3.vec3(0.4, 0.2, 0.1))
+    world.add(new sphere.sphere(new vec3.vec3(-4, 1, 0), 1, material2))
+
+    const material3 = new material.metal(new vec3.vec3(0.7, 0.6, 0.5), 0)
+    world.add(new sphere.sphere(new vec3.vec3(4, 1, 0), 1, material3))
+
+    let cam = new camera.camera()
+
+    cam.aspect_ratio = 16 / 9
+    cam.image_width = 1200
+    cam.samples_per_pixel = 500
+    cam.max_depth = 50
+
+    cam.vfov = 20
+    cam.lookfrom = new vec3.vec3(13, 2, 3)
+    cam.lookat = new vec3.vec3(0, 0, 0)
+    cam.vup = new vec3.vec3(0, 1, 0)
+
+    cam.defocus_angle = 0.6
+    cam.focus_dist = 10
+
+    cam.render(world)
+  </script>
+</body>
+</html>
